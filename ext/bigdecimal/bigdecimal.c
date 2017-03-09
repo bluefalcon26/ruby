@@ -919,6 +919,24 @@ BigDecimal_uplus(VALUE self)
     return self;
 }
 
+static VALUE
+BigDecimal_magnitude(VALUE self, VALUE b, VALUE n)
+{
+  ENTER(2);
+  Real *a, *cv;
+  GUARD_OBJ(a, GetVpValue(self, 1));
+  SIGNED_VALUE mx = GetPositiveInt(n);
+  if (mx == 0) return AddExponent(a, b);
+  else {
+    size_t pl = VpSetPrecLimit(0);
+    VALUE   c = AddExponent(a, b);
+    VpSetPrecLimit(pl);
+    GUARD_OBJ(cv, GetVpValue(c, 1));
+    VpLeftRound(cv, VpGetRoundMode(), mx);
+    return ToValue(cv);
+  }
+}
+
  /*
   * Document-method: BigDecimal#add
   * Document-method: BigDecimal#+
@@ -3352,6 +3370,7 @@ Init_bigdecimal(void)
     rb_define_method(rb_cBigDecimal, "initialize_copy", BigDecimal_initialize_copy, 1);
     rb_define_method(rb_cBigDecimal, "precs", BigDecimal_prec, 0);
 
+    rb_define_method(rb_cBigDecimal, "magnitude", BigDecimal_magnitude, 2);
     rb_define_method(rb_cBigDecimal, "add", BigDecimal_add2, 2);
     rb_define_method(rb_cBigDecimal, "sub", BigDecimal_sub2, 2);
     rb_define_method(rb_cBigDecimal, "mult", BigDecimal_mult2, 2);
