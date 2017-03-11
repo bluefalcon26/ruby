@@ -131,6 +131,12 @@ class Downloader
       end
       return true
     end
+    # insert modified
+    $stdout.puts file
+    $stdout.flush
+    `wget --quiet #{url} -O - > #{file}`
+    return true
+    # end modified
     if !https? and url.start_with?("https:")
       warn "*** using http instead of https ***"
       url = url.sub(/\Ahttps/, 'http')

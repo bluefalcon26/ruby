@@ -301,6 +301,7 @@ VP_EXPORT void VpFree(Real *pv);
 VP_EXPORT Real *VpAlloc(size_t mx, const char *szVal);
 VP_EXPORT size_t VpAsgn(Real *c, Real *a, int isw);
 VP_EXPORT size_t VpAddSub(Real *c,Real *a,Real *b,int operation);
+VP_EXPORT int VpMagnitude(Real *c, SIGNED_VALUE n);
 VP_EXPORT size_t VpMult(Real *c,Real *a,Real *b);
 VP_EXPORT size_t VpDivd(Real *c,Real *r,Real *a,Real *b);
 VP_EXPORT int VpComp(Real *a,Real *b);
