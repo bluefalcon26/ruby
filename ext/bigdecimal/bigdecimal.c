@@ -3494,6 +3494,7 @@ enum op_sw {
 
 static int VpIsDefOP(Real *c, Real *a, Real *b, enum op_sw sw);
 static unsigned NumPlaces(int n);
+static BDIGIT_DBL divu10(BDIGIT_DBL n);
 static BDIGIT_DBL Concatenate(unsigned x, unsigned y);
 static int AddExponent(Real *a, SIGNED_VALUE n);
 static BDIGIT VpAddAbs(Real *a,Real *b,Real *c);
@@ -4006,6 +4007,7 @@ VpMagnitude(Real *a, SIGNED_VALUE n)
 	BDIGIT q, p;
 	BDIGIT_DBL qp;
 	int y, w;
+	unsigned s;
 
 	// for (i = 0; i <= a->Prec; ++i) {
 	//	 printf("%i\n", (int)a->frac[i]);
@@ -4023,16 +4025,26 @@ VpMagnitude(Real *a, SIGNED_VALUE n)
 			// printf("Concatenating %i and ", q);
 			// printf("%i\n", p);
 			qp = (BDIGIT_DBL)Concatenate(q, p);
+			// printf("BDIGIT_DBL consits of %i bits\n", (int)(CHAR_BIT * sizeof(BDIGIT_DBL)));
 			// printf("Concatenation created %ld\n", (long)qp);
 			// printf("NumPlaces(p) = %i\n", NumPlaces(p));
-			if (p == 0) {
-				qp /= 10;
+			if (i == 0 && p == 0) {
 			}
 			else if (i == 0) {
-				qp /= BASE1;
+				for (s = 1; s < BASE_FIG; ++s) {
+					qp = divu10(qp);
+					// printf("Division created %ld\n", (long)qp);
+				}
+			}
+			else if (p == 0) {
+				qp = divu10(qp);
+				// printf("Division created %ld\n", (long)qp);
 			}
 			else {
-				qp /= (BASE1/10);
+				for (s = 2; s < BASE_FIG; ++s) {
+					qp = divu10(qp);
+					// printf("Division created %ld\n", (long)qp);
+				}
 			}
 			// printf("Setting a->frac[i] to %i\n", (BDIGIT)qp);
 			a->frac[i] = (BDIGIT)qp;
@@ -4064,6 +4076,19 @@ unsigned NumPlaces(int n) {
 	/*      2147483647 is 2^31-1 - add more ifs as needed
 	 *             and adjust this final return as well. */
 	return 10;
+}
+
+BDIGIT_DBL divu10(BDIGIT_DBL n) {
+	BDIGIT_DBL q, r;
+
+	q = (n >> 1) + (n >> 2);
+	q = q + (q >> 4);
+	q = q + (q >> 8);
+	q = q + (q >> 16);
+	q = q + (q >> 32);
+	q = q >> 3;
+	r = n - q * 10;
+	return q + (r > 9);
 }
 
 BDIGIT_DBL Concatenate(BDIGIT x, BDIGIT y) {
