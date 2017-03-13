@@ -3493,7 +3493,7 @@ enum op_sw {
 };
 
 static int VpIsDefOP(Real *c, Real *a, Real *b, enum op_sw sw);
-static int NumPlaces(int n);
+static unsigned NumPlaces(int n);
 static BDIGIT_DBL Concatenate(unsigned x, unsigned y);
 static int AddExponent(Real *a, SIGNED_VALUE n);
 static BDIGIT VpAddAbs(Real *a,Real *b,Real *c);
@@ -4002,44 +4002,49 @@ overflow:
 	VP_EXPORT int
 VpMagnitude(Real *a, SIGNED_VALUE n)
 {
-	SIGNED_VALUE w, r;
 	size_t i;
 	BDIGIT q, p;
 	BDIGIT_DBL qp;
-	int s;
+	int y, w;
 
-	for (i = 0; i <= a->Prec; ++i) {
-		printf("%i\n", (int)a->frac[i]);
-	}
-	printf("Beginning Operation\n");
+	// for (i = 0; i <= a->Prec; ++i) {
+	//	 printf("%i\n", (int)a->frac[i]);
+	// }
+	//printf("Beginning Operation\n");
 	if (n == 0) return 1;
 	if (!VpIsDef(a)) goto NoVal;
 	if (VpIsZero(a)) return 1;
 
-	for (w = 0; w < n; ++w) {
-		// memmove(&a->frac[1], &a->frac[0], a->Prec*sizeof(BDIGIT));
+	y = n % BASE_FIG - NumPlaces(a->frac[0]);
+	for (w = 0; w <= y; ++w) {
 		for (i = 0; i < a->Prec; ++i) {
-			//q = a->frac[i];
 			q = (i == 0) ? a->frac[i] : (BDIGIT)((BDIGIT_DBL)a->frac[i] * 10 % BASE);
 			p = a->frac[i + 1];
-			printf("Concatenating %i and ", q);
-			printf("%i\n", p);
+			// printf("Concatenating %i and ", q);
+			// printf("%i\n", p);
 			qp = (BDIGIT_DBL)Concatenate(q, p);
-			printf("Concatenation created %ld\n", (long)qp);
-			printf("NumPlaces(p) = %i\n", NumPlaces(p));
-			s = (i == 0) ? NumPlaces(p) - 1 : NumPlaces(p);
-			for (r = 0; r < (SIGNED_VALUE)s; ++r) {
+			// printf("Concatenation created %ld\n", (long)qp);
+			// printf("NumPlaces(p) = %i\n", NumPlaces(p));
+			if (i == 0 && p == 0) {
+				// pass through
+			}
+			else if (p == 0) {
 				qp /= 10;
 			}
-			printf("Setting a->frac[i] to %i\n", (BDIGIT)qp);
+			else if (i == 0) {
+				qp /= BASE1;
+			}
+			else {
+				qp /= (BASE1/10);
+			}
+			// printf("Setting a->frac[i] to %i\n", (BDIGIT)qp);
 			a->frac[i] = (BDIGIT)qp;
 		}
 	}
-	a->frac[a->Prec] = 0;
-	for (i = 0; i <= a->Prec; ++i) {
-		printf("%i\n", (int)a->frac[i]);
-	}
-	// AddExponent(a, n / BASE_FIG);
+	// for (i = 0; i <= a->Prec; ++i) {
+	//	 printf("%i\n", (int)a->frac[i]);
+	// }
+	AddExponent(a, n / BASE_FIG);
 	return 1;
 
 NoVal:
@@ -4048,7 +4053,7 @@ NoVal:
 	return 0;
 }
 
-int NumPlaces(int n) {
+unsigned NumPlaces(int n) {
 	if (n < 0) n = -n;
 	if (n < 10) return 1;
 	if (n < 100) return 2;
